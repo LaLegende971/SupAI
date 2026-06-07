@@ -1,0 +1,14 @@
+[Unit]
+Description=SupAI Frontend
+After=network.target
+
+[Service]
+Type=simple
+User=supai-root
+WorkingDirectory=/opt/supai
+ExecStart=/bin/bash -c 'source /root/.nvm/nvm.sh 2>/dev/null || source /home/supai-root/.nvm/nvm.sh; npx serve dist -l 5000 -s'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

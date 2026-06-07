@@ -1,0 +1,54 @@
+import { Topbar } from '../components/shared/Topbar';
+import { EnrollmentForm } from '../components/enrollment/EnrollmentForm';
+import { TokenTable } from '../components/enrollment/TokenTable';
+import { useEnrollmentStore } from '../store/enrollmentStore';
+import { usePolicyStore } from '../store/policyStore';
+import { useGroupStore } from '../store/groupStore';
+import { generateToken } from '../api/enrollment';
+
+export function EnrollmentPage() {
+  const { tokens, addToken, revokeToken } = useEnrollmentStore();
+  const { policies } = usePolicyStore();
+  const { groups } = useGroupStore();
+
+  async function handleGenerate(host: string, policyId: string, groupId: string) {
+    const token = await generateToken({ host, policyId, groupId });
+    addToken(token);
+    return token;
+  }
+
+  function handleRevoke(id: string) {
+    if (confirm('Révoquer ce token ?')) revokeToken(id);
+  }
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      <Topbar
+        title="Enrollment"
+        subtitle="Inscription de nouveaux agents"
+      />
+
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+        <EnrollmentForm
+          policies={policies}
+          groups={groups}
+          onGenerate={handleGenerate}
+        />
+
+        <div>
+          <h3 className="text-xs text-white/30 uppercase tracking-wide mb-3 font-medium">
+            Historique des tokens
+          </h3>
+          <div className="border border-white/10 rounded-md overflow-hidden">
+            <TokenTable
+              tokens={tokens}
+              policies={policies}
+              groups={groups}
+              onRevoke={handleRevoke}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

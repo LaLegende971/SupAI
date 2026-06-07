@@ -1,0 +1,31 @@
+import type { Policy } from '../types';
+
+export const mockPolicies: Policy[] = [
+  {
+    id: 'pol-001',
+    name: 'Production Standard',
+    description: 'Politique de collecte standard pour les serveurs de production',
+    pushInterval: 30,
+    metrics: ['CPU', 'RAM', 'Disk', 'Network', 'Windows Services', 'Processes'],
+    thresholds: { CPU: 80, RAM: 85, Disk: 90 },
+    agentCount: 2,
+  },
+  {
+    id: 'pol-002',
+    name: 'Production Intensive',
+    description: 'Collecte haute fréquence avec logs pour les serveurs critiques',
+    pushInterval: 10,
+    metrics: ['CPU', 'RAM', 'Disk', 'Network', 'Windows Services', 'Event Logs', 'Processes'],
+    thresholds: { CPU: 75, RAM: 80, Disk: 85 },
+    agentCount: 2,
+  },
+  {
+    id: 'pol-003',
+    name: 'Infrastructure Base',
+    description: 'Surveillance allégée pour les serveurs infrastructure',
+    pushInterval: 60,
+    metrics: ['CPU', 'RAM', 'Disk', 'Windows Services'],
+    thresholds: { CPU: 90, RAM: 90, Disk: 95 },
+    agentCount: 2,
+  },
+];
