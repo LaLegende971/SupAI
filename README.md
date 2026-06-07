@@ -1,4 +1,4 @@
-# SupAI — Infrastructure Monitor
+# SupAI — Solutions de supervision boostées à l'IA
 
 Interface web d'administration pour la plateforme de monitoring SupAI.
 
