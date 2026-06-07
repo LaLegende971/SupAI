@@ -6,7 +6,7 @@ interface Props {
   open: boolean;
   group: Group | null;
   onClose: () => void;
-  onSave: (data: Omit<Group, 'id' | 'agentIds'>) => void;
+  onSave: (data: Omit<Group, 'id' | 'agentIds'>) => Promise<void>;
 }
 
 const PRESET_COLORS = [
@@ -35,10 +35,9 @@ export function GroupFormPanel({ open, group, onClose, onSave }: Props) {
     }
   }, [group, open]);
 
-  function handleSave() {
+  async function handleSave() {
     if (!name.trim()) return;
-    onSave({ name: name.trim(), description, color });
-    onClose();
+    await onSave({ name: name.trim(), description, color });
   }
 
   return (

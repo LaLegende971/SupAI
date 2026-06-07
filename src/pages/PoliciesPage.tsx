@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, AlertTriangle } from 'lucide-react';
 import { Topbar } from '../components/shared/Topbar';
 import { PolicyList } from '../components/policies/PolicyList';
 import { PolicyFormPanel } from '../components/policies/PolicyFormPanel';
@@ -10,7 +10,7 @@ import { useEnrollmentStore } from '../store/enrollmentStore';
 import type { Policy } from '../types';
 
 export function PoliciesPage() {
-  const { policies, isPanelOpen, selectedPolicy, openPanel, closePanel, addPolicy, updatePolicy, deletePolicy, load } =
+  const { policies, isPanelOpen, selectedPolicy, openPanel, closePanel, addPolicy, updatePolicy, deletePolicy, load, error } =
     usePolicyStore();
   const { load: loadGroups } = useGroupStore();
   const { load: loadTokens } = useEnrollmentStore();
@@ -25,16 +25,22 @@ export function PoliciesPage() {
   const [enrollOpen, setEnrollOpen] = useState(false);
 
   async function handleSave(data: Omit<Policy, 'id' | 'agentCount'>) {
-    if (selectedPolicy) {
-      await updatePolicy({ ...selectedPolicy, ...data });
-    } else {
-      await addPolicy(data);
+    try {
+      if (selectedPolicy) {
+        await updatePolicy({ ...selectedPolicy, ...data });
+      } else {
+        await addPolicy(data);
+      }
+      closePanel();
+    } catch {
+      // error is displayed via store.error
     }
-    closePanel();
   }
 
   async function handleDelete(id: string) {
-    if (confirm('Supprimer cette politique ?')) await deletePolicy(id);
+    if (confirm('Supprimer cette politique ?')) {
+      try { await deletePolicy(id); } catch { /* affiché via store.error */ }
+    }
   }
 
   function handleEnroll(policyId: string) {
@@ -59,6 +65,13 @@ export function PoliciesPage() {
           </button>
         }
       />
+
+      {error && (
+        <div className="mx-6 mt-3 flex items-center gap-2 px-3 py-2 bg-status-offline/10 border border-status-offline/20 rounded text-xs text-status-offline">
+          <AlertTriangle size={13} />
+          {error}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
         <div className="border border-white/10 rounded-md overflow-hidden">

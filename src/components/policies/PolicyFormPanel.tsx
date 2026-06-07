@@ -7,7 +7,7 @@ interface Props {
   open: boolean;
   policy: Policy | null;
   onClose: () => void;
-  onSave: (data: Omit<Policy, 'id' | 'agentCount'>) => void;
+  onSave: (data: Omit<Policy, 'id' | 'agentCount'>) => Promise<void>;
 }
 
 const INTERVALS = [
@@ -93,9 +93,9 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
     setMetrics((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!name.trim()) return;
-    onSave({
+    await onSave({
       name: name.trim(),
       description,
       pushInterval,
@@ -105,7 +105,6 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
       updateCheckFrequency,
       autoUpdate,
     });
-    onClose();
   }
 
   return (
