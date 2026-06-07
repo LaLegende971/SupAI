@@ -6,9 +6,12 @@ After=network.target
 Type=simple
 User=supai-root
 WorkingDirectory=/opt/supai
-ExecStart=/bin/bash -c 'source /root/.nvm/nvm.sh 2>/dev/null || source /home/supai-root/.nvm/nvm.sh; npx serve dist -l 5000 -s'
+Environment=NVM_DIR=/home/supai-root/.nvm
+ExecStart=/bin/bash -c 'source /home/supai-root/.nvm/nvm.sh && npx serve dist -l 5000 -s'
 Restart=on-failure
 RestartSec=5
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
