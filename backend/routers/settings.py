@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from models import User
+from auth import require_admin
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import select, text
 from database import get_session, build_engine, DB_PATH
@@ -62,7 +64,7 @@ async def get_settings(db: AsyncSession = Depends(get_session)):
 
 
 @router.put("", response_model=SettingsOut)
-async def update_settings(body: SettingsUpdate, db: AsyncSession = Depends(get_session)):
+async def update_settings(body: SettingsUpdate, db: AsyncSession = Depends(get_session), _: User = Depends(require_admin)):
     mapping = {
         "server_url": body.server_url,
         "ollama_host": body.ollama_host,
@@ -82,7 +84,7 @@ async def update_settings(body: SettingsUpdate, db: AsyncSession = Depends(get_s
 
 
 @router.post("/test-postgresql")
-async def test_postgresql(body: PostgresConfig):
+async def test_postgresql(body: PostgresConfig, _: User = Depends(require_admin)):
     url = f"postgresql+asyncpg://{body.user}:{body.password}@{body.host}:{body.port}/{body.database}"
     try:
         engine = create_async_engine(url, connect_args={})
@@ -98,6 +100,7 @@ async def test_postgresql(body: PostgresConfig):
 async def migrate_to_postgresql(
     body: PostgresConfig,
     db: AsyncSession = Depends(get_session),
+    _: User = Depends(require_admin),
 ):
     pg_url = f"postgresql+asyncpg://{body.user}:{body.password}@{body.host}:{body.port}/{body.database}"
 
@@ -158,7 +161,7 @@ async def migrate_to_postgresql(
 
 
 @router.delete("/sqlite")
-async def delete_sqlite():
+async def delete_sqlite(_: User = Depends(require_admin)):
     if not DB_PATH.exists():
         raise HTTPException(404, "SQLite database not found")
     if not os.environ.get("SUPAI_DATABASE_URL"):

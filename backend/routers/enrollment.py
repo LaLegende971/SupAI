@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_session
-from models import Agent, EnrollmentToken, Policy, Group
+from models import Agent, EnrollmentToken, Policy, Group, User
 from schemas import EnrollRequest, EnrollResponse, TokenCreate, TokenOut
+from auth import require_admin
 
 router = APIRouter(prefix="/enrollment", tags=["enrollment"])
 
@@ -94,7 +95,11 @@ async def list_tokens(db: AsyncSession = Depends(get_session)):
 
 
 @router.post("/token", response_model=TokenOut)
-async def create_token(body: TokenCreate, db: AsyncSession = Depends(get_session)):
+async def create_token(
+    body: TokenCreate,
+    db: AsyncSession = Depends(get_session),
+    _: User = Depends(require_admin),
+):
     now = datetime.utcnow()
     tok = EnrollmentToken(
         token=f"supai-enr-{secrets.token_hex(16)}",
@@ -112,7 +117,11 @@ async def create_token(body: TokenCreate, db: AsyncSession = Depends(get_session
 
 
 @router.delete("/token/{token_id}")
-async def revoke_token(token_id: str, db: AsyncSession = Depends(get_session)):
+async def revoke_token(
+    token_id: str,
+    db: AsyncSession = Depends(get_session),
+    _: User = Depends(require_admin),
+):
     tok = await db.get(EnrollmentToken, token_id)
     if not tok:
         raise HTTPException(404, "Token not found")

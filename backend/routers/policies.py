@@ -4,7 +4,7 @@ from sqlalchemy import select, func
 from database import get_session
 from models import Policy, Agent, User
 from schemas import PolicyCreate, PolicyOut
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from audit import log_action
 
 router = APIRouter(prefix="/policies", tags=["policies"])
@@ -37,7 +37,7 @@ async def create_policy(
     request: Request,
     body: PolicyCreate,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     policy = Policy(**body.model_dump())
     db.add(policy)
@@ -54,7 +54,7 @@ async def update_policy(
     policy_id: str,
     body: PolicyCreate,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     policy = await db.get(Policy, policy_id)
     if not policy:
@@ -73,7 +73,7 @@ async def delete_policy(
     request: Request,
     policy_id: str,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     policy = await db.get(Policy, policy_id)
     if not policy:

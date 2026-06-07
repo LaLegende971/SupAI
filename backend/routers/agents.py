@@ -4,7 +4,7 @@ from sqlalchemy import select, func
 from database import get_session
 from models import Agent, Policy, User
 from schemas import AgentOut, AgentPolicyUpdate
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from audit import log_action
 
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -29,7 +29,7 @@ async def restart_agent(
     request: Request,
     agent_id: str,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     agent = await db.get(Agent, agent_id)
     if not agent:
@@ -45,7 +45,7 @@ async def update_agent_policy(
     agent_id: str,
     body: AgentPolicyUpdate,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     agent = await db.get(Agent, agent_id)
     if not agent:
@@ -67,7 +67,7 @@ async def unenroll_agent(
     request: Request,
     agent_id: str,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     agent = await db.get(Agent, agent_id)
     if not agent:

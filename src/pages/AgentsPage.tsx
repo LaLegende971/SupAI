@@ -13,9 +13,11 @@ import { useEnrollmentStore } from '../store/enrollmentStore';
 import { useMetricsSimulator } from '../hooks/useMetricsSimulator';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { WS_URL } from '../config';
+import { useAuthStore } from '../store/authStore';
 import type { AgentStatus, Agent } from '../types';
 
 export function AgentsPage() {
+  const isAdmin = useAuthStore((s) => s.role === 'admin');
   useMetricsSimulator();
   useWebSocket(WS_URL);
 
@@ -60,15 +62,17 @@ export function AgentsPage() {
         subtitle={`${agents.length} agents enregistrés`}
         actions={
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setEnrollOpen(true)}
-              className="flex items-center gap-1.5 h-8 px-3 bg-accent-blue text-white text-xs rounded
-                font-medium hover:bg-accent-blue/90 transition-colors"
-            >
-              <UserPlus size={13} />
-              Enroller un agent
-            </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setEnrollOpen(true)}
+                className="flex items-center gap-1.5 h-8 px-3 bg-accent-blue text-white text-xs rounded
+                  font-medium hover:bg-accent-blue/90 transition-colors"
+              >
+                <UserPlus size={13} />
+                Enroller un agent
+              </button>
+            )}
             <AgentFilters
               search={search}
               onSearch={setSearch}
@@ -99,15 +103,17 @@ export function AgentsPage() {
           {agents.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <p className="text-sm text-white/25">Aucun agent enregistré</p>
-              <button
-                type="button"
-                onClick={() => setEnrollOpen(true)}
-                className="flex items-center gap-1.5 h-8 px-4 border border-white/15 text-xs text-white/50
-                  rounded hover:text-white hover:border-white/30 transition-colors"
-              >
-                <UserPlus size={12} />
-                Enroller le premier agent
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setEnrollOpen(true)}
+                  className="flex items-center gap-1.5 h-8 px-4 border border-white/15 text-xs text-white/50
+                    rounded hover:text-white hover:border-white/30 transition-colors"
+                >
+                  <UserPlus size={12} />
+                  Enroller le premier agent
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -118,14 +124,16 @@ export function AgentsPage() {
         policies={policies}
         groups={groups}
         onClose={() => setSelectedAgent(null)}
-        onRestart={handleRestart}
-        onUnenroll={handleUnenroll}
+        onRestart={isAdmin ? handleRestart : undefined}
+        onUnenroll={isAdmin ? handleUnenroll : undefined}
       />
 
-      <QuickEnrollPanel
-        open={enrollOpen}
-        onClose={() => setEnrollOpen(false)}
-      />
+      {isAdmin && (
+        <QuickEnrollPanel
+          open={enrollOpen}
+          onClose={() => setEnrollOpen(false)}
+        />
+      )}
     </div>
   );
 }

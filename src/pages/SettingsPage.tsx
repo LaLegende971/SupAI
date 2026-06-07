@@ -4,6 +4,7 @@ import { Topbar } from '../components/shared/Topbar';
 import { mockSettings } from '../fixtures/settings';
 import { fetchSettings, saveSettings, testPostgresql, migrateToPostgresql, deleteSqlite } from '../api/settings';
 import { USE_MOCK } from '../config';
+import { useAuthStore } from '../store/authStore';
 import type { Settings } from '../types';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -57,6 +58,7 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
 interface PgConfig { host: string; port: number; database: string; user: string; password: string }
 
 export function SettingsPage() {
+  const isAdmin = useAuthStore((s) => s.role === 'admin');
   const [settings, setSettings] = useState<Settings>(mockSettings);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -176,7 +178,7 @@ export function SettingsPage() {
       <Topbar
         title="Paramètres"
         subtitle="Configuration globale de la plateforme"
-        actions={
+        actions={isAdmin ? (
           <button
             onClick={handleSave}
             disabled={saving}
@@ -186,7 +188,7 @@ export function SettingsPage() {
             {saving ? <Loader size={12} className="animate-spin" /> : <Save size={12} />}
             {saved ? 'Enregistré !' : 'Enregistrer'}
           </button>
-        }
+        ) : undefined}
       />
 
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 max-w-2xl">

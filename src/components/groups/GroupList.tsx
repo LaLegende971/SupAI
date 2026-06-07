@@ -4,8 +4,8 @@ import type { Group, Agent } from '../../types';
 interface Props {
   groups: Group[];
   agents: Agent[];
-  onEdit: (group: Group) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (group: Group) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function GroupList({ groups, agents, onEdit, onDelete }: Props) {
@@ -35,18 +35,22 @@ export function GroupList({ groups, agents, onEdit, onDelete }: Props) {
                 </div>
               </div>
               <div className="flex gap-1.5">
-                <button
-                  onClick={() => onEdit(group)}
-                  className="p-1.5 text-white/30 hover:text-accent-blue rounded transition-colors"
-                >
-                  <Pencil size={13} />
-                </button>
-                <button
-                  onClick={() => onDelete(group.id)}
-                  className="p-1.5 text-white/30 hover:text-status-offline rounded transition-colors"
-                >
-                  <Trash2 size={13} />
-                </button>
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(group)}
+                    className="p-1.5 text-white/30 hover:text-accent-blue rounded transition-colors"
+                  >
+                    <Pencil size={13} />
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={() => onDelete(group.id)}
+                    className="p-1.5 text-white/30 hover:text-status-offline rounded transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
             </div>
 

@@ -3,9 +3,9 @@ import type { Policy } from '../../types';
 
 interface Props {
   policies: Policy[];
-  onEdit: (policy: Policy) => void;
-  onDelete: (id: string) => void;
-  onEnroll: (policyId: string) => void;
+  onEdit?: (policy: Policy) => void;
+  onDelete?: (id: string) => void;
+  onEnroll?: (policyId: string) => void;
 }
 
 const INTERVAL_LABELS: Record<number, string> = {
@@ -76,30 +76,36 @@ export function PolicyList({ policies, onEdit, onDelete, onEnroll }: Props) {
               </td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => onEnroll(policy.id)}
-                    className="p-1.5 text-white/30 hover:text-status-online rounded transition-colors"
-                    title="Enroller un agent avec cette politique"
-                  >
-                    <UserPlus size={13} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onEdit(policy)}
-                    className="p-1.5 text-white/30 hover:text-accent-blue rounded transition-colors"
-                    title="Modifier"
-                  >
-                    <Pencil size={13} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(policy.id)}
-                    className="p-1.5 text-white/30 hover:text-status-offline rounded transition-colors"
-                    title="Supprimer"
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                  {onEnroll && (
+                    <button
+                      type="button"
+                      onClick={() => onEnroll(policy.id)}
+                      className="p-1.5 text-white/30 hover:text-status-online rounded transition-colors"
+                      title="Enroller un agent avec cette politique"
+                    >
+                      <UserPlus size={13} />
+                    </button>
+                  )}
+                  {onEdit && (
+                    <button
+                      type="button"
+                      onClick={() => onEdit(policy)}
+                      className="p-1.5 text-white/30 hover:text-accent-blue rounded transition-colors"
+                      title="Modifier"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(policy.id)}
+                      className="p-1.5 text-white/30 hover:text-status-offline rounded transition-colors"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

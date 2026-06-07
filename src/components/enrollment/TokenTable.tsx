@@ -5,7 +5,7 @@ interface Props {
   tokens: EnrollmentToken[];
   policies: Policy[];
   groups: Group[];
-  onRevoke: (id: string) => void;
+  onRevoke?: (id: string) => void;
 }
 
 const STATUS_CONFIG = {
@@ -60,7 +60,7 @@ export function TokenTable({ tokens, policies, groups, onRevoke }: Props) {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  {t.status === 'active' && (
+                  {onRevoke && t.status === 'active' && (
                     <button
                       onClick={() => onRevoke(t.id)}
                       className="p-1.5 text-white/25 hover:text-status-offline rounded transition-colors"

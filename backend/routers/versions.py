@@ -1,5 +1,7 @@
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
+from models import User
+from auth import require_admin
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -50,7 +52,7 @@ async def check_version(body: VersionCheck, db: AsyncSession = Depends(get_sessi
 
 
 @router.patch("/versions/{version_id}/stable")
-async def set_stable(version_id: str, db: AsyncSession = Depends(get_session)):
+async def set_stable(version_id: str, db: AsyncSession = Depends(get_session), _: User = Depends(require_admin)):
     # Clear current stable
     result = await db.execute(select(AgentVersion))
     for v in result.scalars().all():

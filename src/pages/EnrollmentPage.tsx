@@ -6,8 +6,10 @@ import { useEnrollmentStore } from '../store/enrollmentStore';
 import { usePolicyStore } from '../store/policyStore';
 import { useGroupStore } from '../store/groupStore';
 import { generateToken } from '../api/enrollment';
+import { useAuthStore } from '../store/authStore';
 
 export function EnrollmentPage() {
+  const isAdmin = useAuthStore((s) => s.role === 'admin');
   const { tokens, addToken, revokeToken, load: loadTokens } = useEnrollmentStore();
   const { policies, load: loadPolicies } = usePolicyStore();
   const { groups, load: loadGroups } = useGroupStore();
@@ -36,11 +38,13 @@ export function EnrollmentPage() {
       />
 
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-        <EnrollmentForm
-          policies={policies}
-          groups={groups}
-          onGenerate={handleGenerate}
-        />
+        {isAdmin && (
+          <EnrollmentForm
+            policies={policies}
+            groups={groups}
+            onGenerate={handleGenerate}
+          />
+        )}
 
         <div>
           <h3 className="text-xs text-white/30 uppercase tracking-wide mb-3 font-medium">
@@ -51,7 +55,7 @@ export function EnrollmentPage() {
               tokens={tokens}
               policies={policies}
               groups={groups}
-              onRevoke={handleRevoke}
+              onRevoke={isAdmin ? handleRevoke : undefined}
             />
           </div>
         </div>

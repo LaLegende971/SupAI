@@ -9,8 +9,8 @@ interface Props {
   policies: Policy[];
   groups: Group[];
   onClose: () => void;
-  onRestart: (agent: Agent) => void;
-  onUnenroll: (agent: Agent) => void;
+  onRestart?: (agent: Agent) => void;
+  onUnenroll?: (agent: Agent) => void;
 }
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -107,48 +107,54 @@ export function AgentDetailPanel({ agent, policies, groups, onClose, onRestart, 
           </div>
 
           {/* Actions */}
-          <div className="px-5 py-4 mt-auto">
-            <p className="text-xs text-white/30 uppercase tracking-wide mb-3">Actions</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => onRestart(agent)}
-                disabled={agent.status === 'offline'}
-                className="flex items-center justify-center gap-2 h-9 px-3 border border-white/10
-                  text-sm text-white/70 rounded hover:bg-white/5 hover:text-white
-                  disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <RefreshCw size={13} />
-                Redémarrer
-              </button>
-              <button
-                disabled
-                title="Bientôt disponible"
-                className="flex items-center justify-center gap-2 h-9 px-3 border border-white/10
-                  text-sm text-white/30 rounded cursor-not-allowed opacity-40"
-              >
-                <FileText size={13} />
-                Voir logs
-              </button>
-              <button
-                disabled
-                title="Bientôt disponible"
-                className="flex items-center justify-center gap-2 h-9 px-3 border border-white/10
-                  text-sm text-white/30 rounded cursor-not-allowed opacity-40"
-              >
-                <Shield size={13} />
-                Changer politique
-              </button>
-              <button
-                onClick={() => onUnenroll(agent)}
-                className="flex items-center justify-center gap-2 h-9 px-3 border border-status-offline/30
-                  text-sm text-status-offline/70 rounded hover:bg-status-offline/10 hover:text-status-offline
-                  transition-colors"
-              >
-                <Trash2 size={13} />
-                Désinscrire
-              </button>
+          {(onRestart || onUnenroll) && (
+            <div className="px-5 py-4 mt-auto">
+              <p className="text-xs text-white/30 uppercase tracking-wide mb-3">Actions</p>
+              <div className="grid grid-cols-2 gap-2">
+                {onRestart && (
+                  <button
+                    onClick={() => onRestart(agent)}
+                    disabled={agent.status === 'offline'}
+                    className="flex items-center justify-center gap-2 h-9 px-3 border border-white/10
+                      text-sm text-white/70 rounded hover:bg-white/5 hover:text-white
+                      disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <RefreshCw size={13} />
+                    Redémarrer
+                  </button>
+                )}
+                <button
+                  disabled
+                  title="Bientôt disponible"
+                  className="flex items-center justify-center gap-2 h-9 px-3 border border-white/10
+                    text-sm text-white/30 rounded cursor-not-allowed opacity-40"
+                >
+                  <FileText size={13} />
+                  Voir logs
+                </button>
+                <button
+                  disabled
+                  title="Bientôt disponible"
+                  className="flex items-center justify-center gap-2 h-9 px-3 border border-white/10
+                    text-sm text-white/30 rounded cursor-not-allowed opacity-40"
+                >
+                  <Shield size={13} />
+                  Changer politique
+                </button>
+                {onUnenroll && (
+                  <button
+                    onClick={() => onUnenroll(agent)}
+                    className="flex items-center justify-center gap-2 h-9 px-3 border border-status-offline/30
+                      text-sm text-status-offline/70 rounded hover:bg-status-offline/10 hover:text-status-offline
+                      transition-colors"
+                  >
+                    <Trash2 size={13} />
+                    Désinscrire
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </SlidePanel>

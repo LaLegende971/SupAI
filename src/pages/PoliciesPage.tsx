@@ -8,8 +8,10 @@ import { usePolicyStore } from '../store/policyStore';
 import { useGroupStore } from '../store/groupStore';
 import { useEnrollmentStore } from '../store/enrollmentStore';
 import type { Policy } from '../types';
+import { useAuthStore } from '../store/authStore';
 
 export function PoliciesPage() {
+  const isAdmin = useAuthStore((s) => s.role === 'admin');
   const { policies, isPanelOpen, selectedPolicy, openPanel, closePanel, addPolicy, updatePolicy, deletePolicy, load, error } =
     usePolicyStore();
   const { load: loadGroups } = useGroupStore();
@@ -53,7 +55,7 @@ export function PoliciesPage() {
       <Topbar
         title="Politiques de collecte"
         subtitle={`${policies.length} politique${policies.length !== 1 ? 's' : ''} configurée${policies.length !== 1 ? 's' : ''}`}
-        actions={
+        actions={isAdmin ? (
           <button
             type="button"
             onClick={() => openPanel()}
@@ -63,7 +65,7 @@ export function PoliciesPage() {
             <Plus size={13} />
             Nouvelle politique
           </button>
-        }
+        ) : undefined}
       />
 
       {error && (
@@ -77,9 +79,9 @@ export function PoliciesPage() {
         <div className="border border-white/10 rounded-md overflow-hidden">
           <PolicyList
             policies={policies}
-            onEdit={(p) => openPanel(p)}
-            onDelete={handleDelete}
-            onEnroll={handleEnroll}
+            onEdit={isAdmin ? (p) => openPanel(p) : undefined}
+            onDelete={isAdmin ? handleDelete : undefined}
+            onEnroll={isAdmin ? handleEnroll : undefined}
           />
         </div>
       </div>

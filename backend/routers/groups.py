@@ -4,7 +4,7 @@ from sqlalchemy import select
 from database import get_session
 from models import Group, User
 from schemas import GroupCreate, GroupOut
-from auth import get_current_user
+from auth import get_current_user, require_admin
 from audit import log_action
 
 router = APIRouter(prefix="/groups", tags=["groups"])
@@ -21,7 +21,7 @@ async def create_group(
     request: Request,
     body: GroupCreate,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     group = Group(**body.model_dump(), agent_ids=[])
     db.add(group)
@@ -38,7 +38,7 @@ async def update_group(
     group_id: str,
     body: GroupCreate,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     group = await db.get(Group, group_id)
     if not group:
@@ -57,7 +57,7 @@ async def delete_group(
     request: Request,
     group_id: str,
     db: AsyncSession = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     group = await db.get(Group, group_id)
     if not group:

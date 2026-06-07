@@ -6,8 +6,10 @@ import { useGroupStore } from '../store/groupStore';
 import { useAgentStore } from '../store/agentStore';
 import { Plus } from 'lucide-react';
 import type { Group } from '../types';
+import { useAuthStore } from '../store/authStore';
 
 export function GroupsPage() {
+  const isAdmin = useAuthStore((s) => s.role === 'admin');
   const { groups, selectedGroup, isPanelOpen, openPanel, closePanel, addGroup, updateGroup, deleteGroup, load: loadGroups } =
     useGroupStore();
   const { agents, load: loadAgents } = useAgentStore();
@@ -35,7 +37,7 @@ export function GroupsPage() {
       <Topbar
         title="Groupes"
         subtitle={`${groups.length} groupe${groups.length !== 1 ? 's' : ''}`}
-        actions={
+        actions={isAdmin ? (
           <button
             onClick={() => openPanel()}
             className="flex items-center gap-1.5 h-8 px-3 bg-accent-blue text-white text-xs rounded
@@ -44,15 +46,15 @@ export function GroupsPage() {
             <Plus size={13} />
             Nouveau groupe
           </button>
-        }
+        ) : undefined}
       />
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
         <GroupList
           groups={groups}
           agents={agents}
-          onEdit={(g) => openPanel(g)}
-          onDelete={handleDelete}
+          onEdit={isAdmin ? (g) => openPanel(g) : undefined}
+          onDelete={isAdmin ? handleDelete : undefined}
         />
       </div>
 
