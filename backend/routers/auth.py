@@ -25,10 +25,12 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     username: str
+    role: str
 
 
 class MeResponse(BaseModel):
     username: str
+    role: str
     is_active: bool
 
 
@@ -63,7 +65,7 @@ async def login(
     )
     await log_action(db, "AUTH_LOGIN", request=request,
                      username=user.username, resource_type="auth", success=True)
-    return TokenResponse(access_token=create_access_token(user.username), username=user.username)
+    return TokenResponse(access_token=create_access_token(user.username), username=user.username, role=user.role)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -90,7 +92,7 @@ async def refresh(
         httponly=True, secure=True, samesite="strict",
         max_age=COOKIE_MAX_AGE, path="/api/v1/auth",
     )
-    return TokenResponse(access_token=create_access_token(user.username), username=user.username)
+    return TokenResponse(access_token=create_access_token(user.username), username=user.username, role=user.role)
 
 
 @router.post("/logout")
@@ -108,4 +110,4 @@ async def logout(
 
 @router.get("/me", response_model=MeResponse)
 async def me(user: User = Depends(get_current_user)):
-    return MeResponse(username=user.username, is_active=user.is_active)
+    return MeResponse(username=user.username, role=user.role, is_active=user.is_active)

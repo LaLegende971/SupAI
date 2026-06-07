@@ -5,6 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, Depends, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -18,6 +19,7 @@ from auth import hash_password, get_current_user
 from routers import agents, enrollment, metrics, policies, groups, versions, settings
 from routers import auth as auth_router
 from routers import audit as audit_router
+from routers import users as users_router
 from ws import ws_endpoint
 
 
@@ -26,10 +28,19 @@ async def lifespan(app: FastAPI):
     build_engine()
     async with get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await _migrate_db()
     await _seed_versions()
     await _seed_admin()
     asyncio.create_task(_cleanup_loop())
     yield
+
+
+async def _migrate_db():
+    async with get_engine().begin() as conn:
+        try:
+            await conn.execute(text("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'admin'"))
+        except Exception:
+            pass  # Colonne déjà existante
 
 
 async def _seed_admin():
@@ -121,6 +132,7 @@ app.include_router(groups.router, prefix="/api/v1", **protected)
 app.include_router(versions.router, prefix="/api/v1", **protected)
 app.include_router(settings.router, prefix="/api/v1", **protected)
 app.include_router(audit_router.router, prefix="/api/v1", **protected)
+app.include_router(users_router.router, prefix="/api/v1", **protected)
 
 
 @app.websocket("/ws/metrics")

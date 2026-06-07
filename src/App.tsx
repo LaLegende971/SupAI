@@ -9,6 +9,7 @@ import { EnrollmentPage } from './pages/EnrollmentPage';
 import { GroupsPage } from './pages/GroupsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuditPage } from './pages/AuditPage';
+import { UsersPage } from './pages/UsersPage';
 
 function AppLayout() {
   return (
@@ -24,6 +25,7 @@ function AppLayout() {
           <Route path="/groups" element={<GroupsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/audit" element={<AuditPage />} />
+          <Route path="/users" element={<UsersPage />} />
         </Routes>
       </main>
     </div>

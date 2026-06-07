@@ -9,6 +9,7 @@ const authClient = axios.create({
 export interface AuthTokens {
   access_token: string;
   username: string;
+  role: string;
 }
 
 export async function login(username: string, password: string): Promise<AuthTokens> {

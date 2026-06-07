@@ -4,6 +4,7 @@ import { login as apiLogin, logout as apiLogout, refresh } from '../api/auth';
 interface AuthStore {
   accessToken: string | null;
   username: string | null;
+  role: 'admin' | 'viewer' | null;
   ready: boolean;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -14,27 +15,28 @@ interface AuthStore {
 export const useAuthStore = create<AuthStore>((set) => ({
   accessToken: null,
   username: null,
+  role: null,
   ready: false,
 
   setToken: (token, username) => set({ accessToken: token, username }),
 
   login: async (username, password) => {
     const data = await apiLogin(username, password);
-    set({ accessToken: data.access_token, username: data.username });
+    set({ accessToken: data.access_token, username: data.username, role: data.role as 'admin' | 'viewer' });
   },
 
   logout: async () => {
     await apiLogout().catch(() => {});
-    set({ accessToken: null, username: null });
+    set({ accessToken: null, username: null, role: null });
   },
 
   tryRefresh: async () => {
     try {
       const data = await refresh();
-      set({ accessToken: data.access_token, username: data.username, ready: true });
+      set({ accessToken: data.access_token, username: data.username, role: data.role as 'admin' | 'viewer', ready: true });
       return true;
     } catch {
-      set({ accessToken: null, username: null, ready: true });
+      set({ accessToken: null, username: null, role: null, ready: true });
       return false;
     }
   },
