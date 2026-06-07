@@ -17,6 +17,7 @@ from models import AgentVersion, User
 from auth import hash_password, get_current_user
 from routers import agents, enrollment, metrics, policies, groups, versions, settings
 from routers import auth as auth_router
+from routers import audit as audit_router
 from ws import ws_endpoint
 
 
@@ -118,6 +119,7 @@ app.include_router(policies.router, prefix="/api/v1", **protected)
 app.include_router(groups.router, prefix="/api/v1", **protected)
 app.include_router(versions.router, prefix="/api/v1", **protected)
 app.include_router(settings.router, prefix="/api/v1", **protected)
+app.include_router(audit_router.router, prefix="/api/v1", **protected)
 
 
 @app.websocket("/ws/metrics")

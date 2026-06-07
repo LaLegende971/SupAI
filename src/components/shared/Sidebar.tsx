@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Monitor, Shield, UserPlus, Layers, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Monitor, Shield, UserPlus, Layers, Settings, LogOut, ScrollText } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/policies', icon: Shield, label: 'Politiques' },
   { to: '/enrollment', icon: UserPlus, label: 'Enrollment' },
   { to: '/groups', icon: Layers, label: 'Groupes' },
+  { to: '/audit', icon: ScrollText, label: 'Audit' },
   { to: '/settings', icon: Settings, label: 'Paramètres' },
 ];
 

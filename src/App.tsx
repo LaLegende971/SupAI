@@ -8,6 +8,7 @@ import { PoliciesPage } from './pages/PoliciesPage';
 import { EnrollmentPage } from './pages/EnrollmentPage';
 import { GroupsPage } from './pages/GroupsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { AuditPage } from './pages/AuditPage';
 
 function AppLayout() {
   return (
@@ -22,6 +23,7 @@ function AppLayout() {
           <Route path="/enrollment" element={<EnrollmentPage />} />
           <Route path="/groups" element={<GroupsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/audit" element={<AuditPage />} />
         </Routes>
       </main>
     </div>

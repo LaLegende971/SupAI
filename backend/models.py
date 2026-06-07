@@ -106,3 +106,18 @@ class User(Base):
     username: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    username: Mapped[str] = mapped_column(String, default="")
+    action: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    resource_type: Mapped[str] = mapped_column(String, default="")
+    resource_id: Mapped[str] = mapped_column(String, default="")
+    resource_name: Mapped[str] = mapped_column(String, default="")
+    ip_address: Mapped[str] = mapped_column(String, default="")
+    success: Mapped[bool] = mapped_column(Boolean, default=True)
+    details: Mapped[str] = mapped_column(Text, default="")
