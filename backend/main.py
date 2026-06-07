@@ -62,12 +62,18 @@ async def _cleanup_loop():
 
 app = FastAPI(title="SupAI API", version="1.0.0", lifespan=lifespan)
 
+ALLOWED_ORIGINS = [
+    "https://192.168.1.221",
+    "http://127.0.0.1:5000",   # dev local
+    "http://localhost:5000",    # dev local
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-Forwarded-For"],
 )
 
 app.include_router(agents.router, prefix="/api/v1")
