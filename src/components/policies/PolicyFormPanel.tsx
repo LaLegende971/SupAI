@@ -17,6 +17,12 @@ const INTERVALS = [
   { value: 300, label: '5 minutes' },
 ] as const;
 
+const UPDATE_FREQUENCIES = [
+  { value: 3600, label: 'Toutes les heures' },
+  { value: 21600, label: 'Toutes les 6h' },
+  { value: 86400, label: 'Toutes les 24h' },
+] as const;
+
 const DEFAULT_THRESHOLDS = { CPU: 80, RAM: 85, Disk: 90 };
 
 function Label({ children }: { children: React.ReactNode }) {
@@ -33,12 +39,32 @@ function Input({ className = '', ...props }: React.InputHTMLAttributes<HTMLInput
   );
 }
 
+function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!enabled)}
+      className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${
+        enabled ? 'bg-accent-blue' : 'bg-white/10'
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+          enabled ? 'translate-x-4' : 'translate-x-0.5'
+        }`}
+      />
+    </button>
+  );
+}
+
 export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [pushInterval, setPushInterval] = useState<10 | 30 | 60 | 300>(30);
   const [metrics, setMetrics] = useState<string[]>(['CPU', 'RAM', 'Disk']);
   const [thresholds, setThresholds] = useState<Record<string, number>>(DEFAULT_THRESHOLDS);
+  const [updateCheckEnabled, setUpdateCheckEnabled] = useState(false);
+  const [updateCheckFrequency, setUpdateCheckFrequency] = useState<3600 | 21600 | 86400>(3600);
+  const [autoUpdate, setAutoUpdate] = useState(false);
 
   useEffect(() => {
     if (policy) {
@@ -47,12 +73,18 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
       setPushInterval(policy.pushInterval);
       setMetrics(policy.metrics);
       setThresholds(policy.thresholds);
+      setUpdateCheckEnabled(policy.updateCheckEnabled ?? false);
+      setUpdateCheckFrequency(policy.updateCheckFrequency ?? 3600);
+      setAutoUpdate(policy.autoUpdate ?? false);
     } else {
       setName('');
       setDescription('');
       setPushInterval(30);
       setMetrics(['CPU', 'RAM', 'Disk']);
       setThresholds(DEFAULT_THRESHOLDS);
+      setUpdateCheckEnabled(false);
+      setUpdateCheckFrequency(3600);
+      setAutoUpdate(false);
     }
   }, [policy, open]);
 
@@ -62,7 +94,16 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
 
   function handleSave() {
     if (!name.trim()) return;
-    onSave({ name: name.trim(), description, pushInterval, metrics, thresholds });
+    onSave({
+      name: name.trim(),
+      description,
+      pushInterval,
+      metrics,
+      thresholds,
+      updateCheckEnabled,
+      updateCheckFrequency,
+      autoUpdate,
+    });
     onClose();
   }
 
@@ -142,6 +183,60 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
                   />
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* ── Agent update section ──────────────────────────────── */}
+          <div className="border-t border-white/[0.07] pt-4">
+            <p className="text-xs text-white/30 uppercase tracking-wide mb-3 font-medium">
+              Mises à jour de l'agent
+            </p>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-white/70">Vérifier les mises à jour</p>
+                  <p className="text-xs text-white/25">L'agent vérifie si une nouvelle version est disponible</p>
+                </div>
+                <Toggle enabled={updateCheckEnabled} onChange={setUpdateCheckEnabled} />
+              </div>
+
+              {updateCheckEnabled && (
+                <>
+                  <div>
+                    <Label>Fréquence de vérification</Label>
+                    <div className="flex gap-2 flex-wrap">
+                      {UPDATE_FREQUENCIES.map((f) => (
+                        <button
+                          key={f.value}
+                          onClick={() => setUpdateCheckFrequency(f.value)}
+                          className={`h-8 px-3 text-xs rounded border transition-colors ${
+                            updateCheckFrequency === f.value
+                              ? 'border-accent-blue/60 bg-accent-blue/10 text-accent-blue'
+                              : 'border-white/10 text-white/40 hover:text-white/70'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-white/70">Mise à jour automatique</p>
+                      <p className="text-xs text-white/25">L'agent s'installe automatiquement sans intervention</p>
+                    </div>
+                    <Toggle enabled={autoUpdate} onChange={setAutoUpdate} />
+                  </div>
+
+                  {autoUpdate && (
+                    <div className="px-3 py-2 bg-status-warning/10 border border-status-warning/20 rounded text-xs text-status-warning/80">
+                      Les agents de cette politique redémarreront automatiquement lors d'une mise à jour.
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>

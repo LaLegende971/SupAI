@@ -9,6 +9,9 @@ export const mockPolicies: Policy[] = [
     metrics: ['CPU', 'RAM', 'Disk', 'Network', 'Windows Services', 'Processes'],
     thresholds: { CPU: 80, RAM: 85, Disk: 90 },
     agentCount: 2,
+    updateCheckEnabled: true,
+    updateCheckFrequency: 3600,
+    autoUpdate: false,
   },
   {
     id: 'pol-002',
@@ -18,6 +21,9 @@ export const mockPolicies: Policy[] = [
     metrics: ['CPU', 'RAM', 'Disk', 'Network', 'Windows Services', 'Event Logs', 'Processes'],
     thresholds: { CPU: 75, RAM: 80, Disk: 85 },
     agentCount: 2,
+    updateCheckEnabled: true,
+    updateCheckFrequency: 21600,
+    autoUpdate: true,
   },
   {
     id: 'pol-003',
@@ -27,5 +33,8 @@ export const mockPolicies: Policy[] = [
     metrics: ['CPU', 'RAM', 'Disk', 'Windows Services'],
     thresholds: { CPU: 90, RAM: 90, Disk: 95 },
     agentCount: 2,
+    updateCheckEnabled: false,
+    updateCheckFrequency: 86400,
+    autoUpdate: false,
   },
 ];

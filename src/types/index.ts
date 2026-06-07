@@ -25,6 +25,9 @@ export interface Policy {
   metrics: string[];
   thresholds: Record<string, number>;
   agentCount: number;
+  updateCheckEnabled: boolean;
+  updateCheckFrequency: 3600 | 21600 | 86400;
+  autoUpdate: boolean;
 }
 
 export interface Group {

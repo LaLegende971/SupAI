@@ -1,0 +1,11 @@
+{
+  "versions": [
+    {
+      "version": "1.0.0",
+      "filename": "supai-agent-1.0.0.exe",
+      "stable": true,
+      "released_at": "2026-06-07T00:00:00Z",
+      "changelog": "Version initiale — collecte CPU, RAM, Disk. Enrollment et auto-update."
+    }
+  ]
+}
