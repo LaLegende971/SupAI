@@ -102,8 +102,9 @@ async def security_headers(request: Request, call_next) -> Response:
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
     response.headers["Cache-Control"] = "no-store"
     # Supprimer les headers qui révèlent la stack technique
-    response.headers.pop("Server", None)
-    response.headers.pop("X-Powered-By", None)
+    for h in ("Server", "X-Powered-By"):
+        if h in response.headers:
+            del response.headers[h]
     return response
 
 
