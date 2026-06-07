@@ -3,8 +3,11 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket, Depends
+from fastapi import FastAPI, WebSocket, Depends, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import select
 
 load_dotenv(Path(__file__).parent / ".env")
@@ -40,14 +43,11 @@ async def _seed_admin():
 async def _seed_versions():
     releases_dir = Path(__file__).parent.parent / "releases"
     releases_dir.mkdir(exist_ok=True)
-
     versions_json = releases_dir / "versions.json"
     if not versions_json.exists():
         return
-
     import json
     data = json.loads(versions_json.read_text())
-
     async with get_session_factory()() as db:
         for entry in data.get("versions", []):
             result = await db.execute(
@@ -71,7 +71,11 @@ async def _cleanup_loop():
             await cleanup_old_metrics(db)
 
 
+limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
+
 app = FastAPI(title="SupAI API", version="1.0.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 ALLOWED_ORIGINS = [
     "https://192.168.1.221",
@@ -86,6 +90,21 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "X-Forwarded-For"],
 )
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next) -> Response:
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    response.headers["Cache-Control"] = "no-store"
+    # Supprimer les headers qui révèlent la stack technique
+    response.headers.pop("Server", None)
+    response.headers.pop("X-Powered-By", None)
+    return response
+
 
 # Routes publiques (utilisées par les agents Windows)
 app.include_router(auth_router.router, prefix="/api/v1")

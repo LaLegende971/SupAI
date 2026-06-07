@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Response, Cookie
 from fastapi.security import OAuth2PasswordRequestForm
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
@@ -12,6 +14,7 @@ from auth import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+limiter = Limiter(key_func=get_remote_address)
 
 COOKIE_NAME = "supai_refresh"
 COOKIE_MAX_AGE = REFRESH_TOKEN_EXPIRE_DAYS * 86400
@@ -29,7 +32,9 @@ class MeResponse(BaseModel):
 
 
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit("5/minute")
 async def login(
+    request: Request,
     response: Response,
     form: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_session),

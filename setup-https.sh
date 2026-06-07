@@ -23,6 +23,14 @@ chmod 600 "$CERT_DIR/supai.key"
 
 echo "[3/5] Configuration Nginx..."
 cat > "$NGINX_CONF" << 'EOF'
+# Zones de rate limiting
+# login : max 5 req/min par IP (anti brute-force)
+limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
+# API générale : max 100 req/min par IP
+limit_req_zone $binary_remote_addr zone=api:10m rate=100r/m;
+# Frontend : max 200 req/min par IP
+limit_req_zone $binary_remote_addr zone=frontend:10m rate=200r/m;
+
 # Redirection HTTP → HTTPS
 server {
     listen 80;
@@ -37,19 +45,40 @@ server {
     ssl_certificate     /etc/nginx/ssl/supai/supai.crt;
     ssl_certificate_key /etc/nginx/ssl/supai/supai.key;
     ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_ciphers         ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:!aNULL:!MD5;
+    ssl_prefer_server_ciphers off;
     ssl_session_cache   shared:SSL:10m;
     ssl_session_timeout 10m;
+
+    # Masquer la version Nginx
+    server_tokens off;
 
     # En-têtes de sécurité
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Frame-Options DENY always;
     add_header X-Content-Type-Options nosniff always;
-    add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss://192.168.1.221; frame-ancestors 'none';" always;
+
+    # Taille max des requêtes (protection upload abusif)
+    client_max_body_size 1m;
+
+    # Route login avec rate limiting strict
+    location = /api/v1/auth/login {
+        limit_req zone=login burst=3 nodelay;
+        limit_req_status 429;
+        proxy_pass         http://127.0.0.1:5001;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
 
     # Backend API REST
     location /api/ {
+        limit_req zone=api burst=20 nodelay;
+        limit_req_status 429;
         proxy_pass         http://127.0.0.1:5001;
         proxy_set_header   Host $host;
         proxy_set_header   X-Real-IP $remote_addr;
@@ -58,7 +87,7 @@ server {
         proxy_read_timeout 30s;
     }
 
-    # WebSocket métriques
+    # WebSocket métriques (pas de rate limiting — connexion persistante)
     location /ws/ {
         proxy_pass         http://127.0.0.1:5001;
         proxy_http_version 1.1;
@@ -71,11 +100,11 @@ server {
 
     # Frontend React (SPA)
     location / {
+        limit_req zone=frontend burst=50 nodelay;
         proxy_pass       http://127.0.0.1:5000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
 
-        # Fallback SPA pour React Router
         proxy_intercept_errors on;
         error_page 404 = @fallback;
     }
@@ -98,7 +127,10 @@ echo "[5/5] Configuration du firewall..."
 if command -v ufw &>/dev/null && ufw status | grep -q "Status: active"; then
     ufw allow 80/tcp
     ufw allow 443/tcp
-    echo "Ports 80 et 443 ouverts dans ufw."
+    # Bloquer l'accès direct aux ports internes depuis l'extérieur
+    ufw deny 5000/tcp
+    ufw deny 5001/tcp
+    echo "Ports 80/443 ouverts, 5000/5001 bloqués depuis l'extérieur."
 else
     echo "ufw non actif, firewall ignoré."
 fi
@@ -107,5 +139,9 @@ echo ""
 echo "=== Installation terminée ! ==="
 echo "SupAI accessible sur : https://$SERVER_IP"
 echo ""
+echo "IMPORTANT : Avant de relancer le backend, configure /opt/supai/backend/.env :"
+echo "  JWT_SECRET=<chaine_aleatoire_longue>"
+echo "  ADMIN_PASSWORD=<mot_de_passe_fort>"
+echo ""
 echo "Note : Le navigateur affichera un avertissement SSL la première fois."
-echo "Clique sur 'Avancé' puis 'Continuer vers le site' pour accéder à SupAI."
+echo "Clique sur 'Avancé' puis 'Continuer vers le site'."
