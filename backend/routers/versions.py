@@ -11,6 +11,11 @@ from packaging.version import Version
 router = APIRouter(prefix="/agent", tags=["versions"])
 
 RELEASES_DIR = Path(__file__).parent.parent.parent / "releases"
+GITHUB_REPO = "LaLegende971/SupAI"
+
+
+def _github_download_url(version: str, filename: str) -> str:
+    return f"https://github.com/{GITHUB_REPO}/releases/download/v{version}/{filename}"
 
 
 @router.get("/versions", response_model=list[VersionOut])
@@ -40,7 +45,7 @@ async def check_version(body: VersionCheck, db: AsyncSession = Depends(get_sessi
     return VersionCheckResponse(
         has_update=has_update,
         latest_version=latest.version if has_update else None,
-        download_url=f"/api/v1/releases/{latest.filename}" if has_update else None,
+        download_url=_github_download_url(latest.version, latest.filename) if has_update else None,
     )
 
 

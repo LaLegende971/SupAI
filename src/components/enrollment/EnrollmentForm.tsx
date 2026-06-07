@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { ClipboardCopy, Check } from 'lucide-react';
 import { API_BASE_URL } from '../../config';
+
+const GITHUB_REPO = 'LaLegende971/SupAI';
+const AGENT_VERSION = '1.0.0';
+const AGENT_FILENAME = `supai-agent-${AGENT_VERSION}.exe`;
+const AGENT_DOWNLOAD_URL = `https://github.com/${GITHUB_REPO}/releases/download/v${AGENT_VERSION}/${AGENT_FILENAME}`;
 import type { Policy, Group, EnrollmentToken } from '../../types';
 
 interface Props {
@@ -33,7 +38,7 @@ export function EnrollmentForm({ policies, groups, defaultPolicyId, onGenerate }
   const [loading, setLoading] = useState(false);
 
   const psCommand = token
-    ? `.\\supai-agent-1.0.0.exe -token "${token.token}" -server "${API_BASE_URL}"`
+    ? `Invoke-WebRequest -Uri "${AGENT_DOWNLOAD_URL}" -OutFile "${AGENT_FILENAME}"\n.\\${AGENT_FILENAME} -token "${token.token}" -server "${API_BASE_URL}"`
     : '';
 
   async function handleGenerate() {
