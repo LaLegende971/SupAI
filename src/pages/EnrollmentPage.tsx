@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Topbar } from '../components/shared/Topbar';
 import { EnrollmentForm } from '../components/enrollment/EnrollmentForm';
 import { TokenTable } from '../components/enrollment/TokenTable';
@@ -7,9 +8,15 @@ import { useGroupStore } from '../store/groupStore';
 import { generateToken } from '../api/enrollment';
 
 export function EnrollmentPage() {
-  const { tokens, addToken, revokeToken } = useEnrollmentStore();
-  const { policies } = usePolicyStore();
-  const { groups } = useGroupStore();
+  const { tokens, addToken, revokeToken, load: loadTokens } = useEnrollmentStore();
+  const { policies, load: loadPolicies } = usePolicyStore();
+  const { groups, load: loadGroups } = useGroupStore();
+
+  useEffect(() => {
+    loadTokens();
+    loadPolicies();
+    loadGroups();
+  }, []);
 
   async function handleGenerate(host: string, policyId: string, groupId: string) {
     const token = await generateToken({ host, policyId, groupId });

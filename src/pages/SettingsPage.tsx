@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Save, Database, CheckCircle, AlertTriangle, Loader } from 'lucide-react';
 import { Topbar } from '../components/shared/Topbar';
 import { mockSettings } from '../fixtures/settings';
+import { fetchSettings, saveSettings, testPostgresql, migrateToPostgresql, deleteSqlite } from '../api/settings';
+import { USE_MOCK } from '../config';
 import type { Settings } from '../types';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -57,6 +59,7 @@ interface PgConfig { host: string; port: number; database: string; user: string;
 export function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(mockSettings);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // PostgreSQL state
   const [pg, setPg] = useState<PgConfig>({ host: '', port: 5432, database: 'supai', user: 'supai', password: '' });
@@ -66,11 +69,41 @@ export function SettingsPage() {
   const [migrateMsg, setMigrateMsg] = useState('');
   const [usingPg, setUsingPg] = useState(false);
 
+  useEffect(() => {
+    if (USE_MOCK) return;
+    fetchSettings().then((data) => {
+      setSettings({
+        serverUrl: data.serverUrl,
+        ollamaHost: data.ollamaHost,
+        ollamaModel: data.ollamaModel,
+        metricsRetentionDays: data.metricsRetentionDays,
+        smtpHost: data.smtpHost,
+        smtpPort: data.smtpPort,
+        smtpUser: data.smtpUser,
+        smtpFrom: data.smtpFrom,
+        alertsEnabled: data.alertsEnabled,
+      });
+      setPg((prev) => ({
+        ...prev,
+        host: data.pgHost || '',
+        port: data.pgPort || 5432,
+        database: data.pgDatabase || 'supai',
+        user: data.pgUser || 'supai',
+      }));
+      setUsingPg(data.usingPostgresql);
+    }).catch(() => {});
+  }, []);
+
   function update<K extends keyof Settings>(key: K, value: Settings[K]) {
     setSettings((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
+    if (!USE_MOCK) {
+      await saveSettings(settings).catch(() => {});
+    }
+    setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -78,14 +111,25 @@ export function SettingsPage() {
   async function handleTestPg() {
     setPgTestStatus('loading');
     setPgTestMsg('');
-    // In mock mode, simulate a test
-    await new Promise((r) => setTimeout(r, 800));
-    if (pg.host && pg.user && pg.database) {
+    if (USE_MOCK) {
+      await new Promise((r) => setTimeout(r, 800));
+      if (pg.host && pg.user && pg.database) {
+        setPgTestStatus('ok');
+        setPgTestMsg('Connexion PostgreSQL réussie');
+      } else {
+        setPgTestStatus('error');
+        setPgTestMsg('Renseignez tous les champs requis');
+      }
+      return;
+    }
+    try {
+      const result = await testPostgresql(pg);
       setPgTestStatus('ok');
-      setPgTestMsg('Connexion PostgreSQL réussie');
-    } else {
+      setPgTestMsg(result.message);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Connexion échouée';
       setPgTestStatus('error');
-      setPgTestMsg('Renseignez tous les champs requis');
+      setPgTestMsg(msg);
     }
   }
 
@@ -93,16 +137,38 @@ export function SettingsPage() {
     if (!confirm('Migrer les données SQLite vers PostgreSQL ? Cette opération est irréversible.')) return;
     setMigrateStatus('loading');
     setMigrateMsg('');
-    await new Promise((r) => setTimeout(r, 1500));
-    setMigrateStatus('done');
-    setMigrateMsg('Migration réussie. Redémarrez le backend pour activer PostgreSQL.');
-    setUsingPg(true);
+    if (USE_MOCK) {
+      await new Promise((r) => setTimeout(r, 1500));
+      setMigrateStatus('done');
+      setMigrateMsg('Migration réussie. Redémarrez le backend pour activer PostgreSQL.');
+      setUsingPg(true);
+      return;
+    }
+    try {
+      const result = await migrateToPostgresql(pg);
+      setMigrateStatus('done');
+      setMigrateMsg(result.message);
+      setUsingPg(true);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Migration échouée';
+      setMigrateStatus('error');
+      setMigrateMsg(msg);
+    }
   }
 
   async function handleDeleteSqlite() {
     if (!confirm('Supprimer définitivement la base SQLite ?')) return;
-    await new Promise((r) => setTimeout(r, 500));
-    alert('Base SQLite supprimée.');
+    if (USE_MOCK) {
+      alert('Base SQLite supprimée.');
+      return;
+    }
+    try {
+      await deleteSqlite();
+      alert('Base SQLite supprimée.');
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? 'Suppression échouée';
+      alert(msg);
+    }
   }
 
   return (
@@ -113,10 +179,11 @@ export function SettingsPage() {
         actions={
           <button
             onClick={handleSave}
+            disabled={saving}
             className="flex items-center gap-1.5 h-8 px-3 bg-accent-blue text-white text-xs rounded
-              font-medium hover:bg-accent-blue/90 transition-colors"
+              font-medium hover:bg-accent-blue/90 transition-colors disabled:opacity-60"
           >
-            <Save size={12} />
+            {saving ? <Loader size={12} className="animate-spin" /> : <Save size={12} />}
             {saved ? 'Enregistré !' : 'Enregistrer'}
           </button>
         }

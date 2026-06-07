@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAgentStore } from '../store/agentStore';
-import { METRICS_REFRESH_INTERVAL } from '../config';
+import { METRICS_REFRESH_INTERVAL, USE_MOCK } from '../config';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -14,6 +14,7 @@ export function useMetricsSimulator() {
   const { agents, updateAgentMetrics } = useAgentStore();
 
   useEffect(() => {
+    if (!USE_MOCK) return;
     const interval = setInterval(() => {
       agents
         .filter((a) => a.status !== 'offline')

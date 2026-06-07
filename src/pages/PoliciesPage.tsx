@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Topbar } from '../components/shared/Topbar';
 import { PolicyList } from '../components/policies/PolicyList';
 import { PolicyFormPanel } from '../components/policies/PolicyFormPanel';
@@ -6,19 +7,22 @@ import { Plus } from 'lucide-react';
 import type { Policy } from '../types';
 
 export function PoliciesPage() {
-  const { policies, isPanelOpen, selectedPolicy, openPanel, closePanel, addPolicy, updatePolicy, deletePolicy } =
+  const { policies, isPanelOpen, selectedPolicy, openPanel, closePanel, addPolicy, updatePolicy, deletePolicy, load } =
     usePolicyStore();
 
-  function handleSave(data: Omit<Policy, 'id' | 'agentCount'>) {
+  useEffect(() => { load(); }, []);
+
+  async function handleSave(data: Omit<Policy, 'id' | 'agentCount'>) {
     if (selectedPolicy) {
-      updatePolicy({ ...selectedPolicy, ...data });
+      await updatePolicy({ ...selectedPolicy, ...data });
     } else {
-      addPolicy({ ...data, id: `pol-${Date.now()}`, agentCount: 0 });
+      await addPolicy(data);
     }
+    closePanel();
   }
 
-  function handleDelete(id: string) {
-    if (confirm('Supprimer cette politique ?')) deletePolicy(id);
+  async function handleDelete(id: string) {
+    if (confirm('Supprimer cette politique ?')) await deletePolicy(id);
   }
 
   return (

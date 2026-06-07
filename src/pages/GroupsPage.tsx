@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Topbar } from '../components/shared/Topbar';
 import { GroupList } from '../components/groups/GroupList';
 import { GroupFormPanel } from '../components/groups/GroupFormPanel';
@@ -7,20 +8,26 @@ import { Plus } from 'lucide-react';
 import type { Group } from '../types';
 
 export function GroupsPage() {
-  const { groups, selectedGroup, isPanelOpen, openPanel, closePanel, addGroup, updateGroup, deleteGroup } =
+  const { groups, selectedGroup, isPanelOpen, openPanel, closePanel, addGroup, updateGroup, deleteGroup, load: loadGroups } =
     useGroupStore();
-  const { agents } = useAgentStore();
+  const { agents, load: loadAgents } = useAgentStore();
 
-  function handleSave(data: Omit<Group, 'id' | 'agentIds'>) {
+  useEffect(() => {
+    loadGroups();
+    loadAgents();
+  }, []);
+
+  async function handleSave(data: Omit<Group, 'id' | 'agentIds'>) {
     if (selectedGroup) {
-      updateGroup({ ...selectedGroup, ...data });
+      await updateGroup({ ...selectedGroup, ...data });
     } else {
-      addGroup({ ...data, id: `grp-${Date.now()}`, agentIds: [] });
+      await addGroup(data);
     }
+    closePanel();
   }
 
-  function handleDelete(id: string) {
-    if (confirm('Supprimer ce groupe ?')) deleteGroup(id);
+  async function handleDelete(id: string) {
+    if (confirm('Supprimer ce groupe ?')) await deleteGroup(id);
   }
 
   return (

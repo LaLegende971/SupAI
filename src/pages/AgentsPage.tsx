@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Topbar } from '../components/shared/Topbar';
 import { AgentStatCards } from '../components/agents/AgentStatCards';
 import { AgentFilters } from '../components/agents/AgentFilters';
@@ -8,14 +8,23 @@ import { useAgentStore } from '../store/agentStore';
 import { usePolicyStore } from '../store/policyStore';
 import { useGroupStore } from '../store/groupStore';
 import { useMetricsSimulator } from '../hooks/useMetricsSimulator';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { WS_URL } from '../config';
 import type { AgentStatus, Agent } from '../types';
 
 export function AgentsPage() {
   useMetricsSimulator();
+  useWebSocket(WS_URL);
 
-  const { agents, selectedAgent, setSelectedAgent } = useAgentStore();
-  const { policies } = usePolicyStore();
-  const { groups } = useGroupStore();
+  const { agents, selectedAgent, setSelectedAgent, load: loadAgents } = useAgentStore();
+  const { policies, load: loadPolicies } = usePolicyStore();
+  const { groups, load: loadGroups } = useGroupStore();
+
+  useEffect(() => {
+    loadAgents();
+    loadPolicies();
+    loadGroups();
+  }, []);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<AgentStatus | 'all'>('all');
