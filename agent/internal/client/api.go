@@ -2,10 +2,12 @@ package client
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/LaLegende971/supai-agent/internal/collector"
@@ -18,9 +20,16 @@ type Client struct {
 }
 
 func New(serverURL string) *Client {
+	transport := http.DefaultTransport
+	// Cert auto-signé sur réseau local : on accepte sans vérification CA
+	if strings.HasPrefix(serverURL, "https://") {
+		transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+		}
+	}
 	return &Client{
-		ServerURL: serverURL,
-		HTTPClient: &http.Client{Timeout: 15 * time.Second},
+		ServerURL:  serverURL,
+		HTTPClient: &http.Client{Timeout: 15 * time.Second, Transport: transport},
 	}
 }
 
@@ -65,16 +74,22 @@ type MetricPush struct {
 	RAM       float64   `json:"ram"`
 	Disk      float64   `json:"disk"`
 	Uptime    string    `json:"uptime"`
+	Services  []string  `json:"services"`
 	Timestamp time.Time `json:"timestamp"`
 }
 
 func (c *Client) PushMetrics(agentID string, snap *collector.Snapshot) error {
+	services := snap.Services
+	if services == nil {
+		services = []string{}
+	}
 	payload := MetricPush{
 		AgentID:   agentID,
 		CPU:       snap.CPU,
 		RAM:       snap.RAM,
 		Disk:      snap.Disk,
 		Uptime:    snap.Uptime,
+		Services:  services,
 		Timestamp: snap.Timestamp,
 	}
 	body, _ := json.Marshal(payload)

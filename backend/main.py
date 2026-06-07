@@ -20,6 +20,7 @@ from routers import agents, enrollment, metrics, policies, groups, versions, set
 from routers import auth as auth_router
 from routers import audit as audit_router
 from routers import users as users_router
+from routers import events as events_router
 from ws import ws_endpoint
 
 
@@ -123,6 +124,7 @@ async def security_headers(request: Request, call_next) -> Response:
 app.include_router(auth_router.router, prefix="/api/v1")
 app.include_router(enrollment.router, prefix="/api/v1")
 app.include_router(metrics.router, prefix="/api/v1")
+app.include_router(events_router.router, prefix="/api/v1")
 
 # Routes protégées par JWT
 protected = {"dependencies": [Depends(get_current_user)]}

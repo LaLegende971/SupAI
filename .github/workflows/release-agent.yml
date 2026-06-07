@@ -1,0 +1,57 @@
+name: Release Agent
+
+on:
+  push:
+    tags:
+      - 'agent-v*'   # ex: agent-v1.0.1
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#agent-}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Windows amd64
+        working-directory: agent
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: |
+          go build \
+            -ldflags="-s -w -X main.AgentVersion=${{ steps.version.outputs.VERSION }}" \
+            -o supai-agent.exe \
+            ./cmd/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Agent ${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## SupAI Agent ${{ steps.version.outputs.VERSION }}
+
+            ### Installation
+            ```powershell
+            # Exécuter en tant qu'administrateur
+            .\supai-agent.exe -token <TOKEN> -server https://192.168.1.221
+            ```
+
+            ### Désinstallation
+            ```powershell
+            .\supai-agent.exe -uninstall
+            ```
+          files: agent/supai-agent.exe
+          draft: false
+          prerelease: false

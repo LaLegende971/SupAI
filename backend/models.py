@@ -109,6 +109,17 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class AgentEvent(Base):
+    __tablename__ = "agent_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    agent_id: Mapped[str] = mapped_column(String, index=True)
+    level: Mapped[str] = mapped_column(String, default="error")   # error | warning | info
+    source: Mapped[str] = mapped_column(String, default="")
+    message: Mapped[str] = mapped_column(Text, default="")
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 

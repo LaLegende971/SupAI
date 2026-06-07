@@ -139,6 +139,7 @@ func run() {
 				updated, err := updater.CheckAndUpdate(c, cfg.Version, cfg.AgentID)
 				if err != nil {
 					log.Printf("[updater] error: %v", err)
+					sendError(c, cfg.AgentID, "updater", err.Error())
 				} else if updated {
 					service.RestartSelf()
 				}
@@ -151,11 +152,22 @@ func pushOnce(c *client.Client, cfg *config.Config) {
 	snap, err := collector.Collect()
 	if err != nil {
 		log.Printf("[metrics] collect error: %v", err)
+		sendError(c, cfg.AgentID, "metrics", err.Error())
 		return
 	}
 	if err := c.PushMetrics(cfg.AgentID, snap); err != nil {
 		log.Printf("[metrics] push error: %v", err)
+		sendError(c, cfg.AgentID, "metrics", err.Error())
 	}
+}
+
+func sendError(c *client.Client, agentID, source, msg string) {
+	_ = c.SendEvent(client.AgentEvent{
+		AgentID: agentID,
+		Level:   "error",
+		Message: msg,
+		Source:  source,
+	})
 }
 
 func getLocalIP() string {

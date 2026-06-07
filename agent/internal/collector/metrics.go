@@ -11,10 +11,11 @@ import (
 )
 
 type Snapshot struct {
-	CPU       float64
-	RAM       float64
-	Disk      float64
-	Uptime    string
+	CPU      float64
+	RAM      float64
+	Disk     float64
+	Uptime   string
+	Services []string
 	Timestamp time.Time
 }
 
@@ -46,6 +47,7 @@ func Collect() (*Snapshot, error) {
 		RAM:       memStat.UsedPercent,
 		Disk:      diskStat.UsedPercent,
 		Uptime:    uptime,
+		Services:  ListRunningServices(),
 		Timestamp: time.Now().UTC(),
 	}, nil
 }

@@ -1,7 +1,10 @@
-import { RefreshCw, FileText, Shield, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { RefreshCw, FileText, Shield, Trash2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { SlidePanel } from '../shared/SlidePanel';
 import { StatusBadge } from '../shared/StatusBadge';
 import { ProgressBar } from '../shared/ProgressBar';
+import { fetchAgentEvents } from '../../api/events';
+import type { AgentEvent } from '../../api/events';
 import type { Agent, Policy, Group } from '../../types';
 
 interface Props {
@@ -31,9 +34,24 @@ function MetricBlock({ label, value }: { label: string; value: number }) {
   );
 }
 
+const LEVEL_ICON = {
+  error: <AlertCircle size={11} className="text-status-offline shrink-0" />,
+  warning: <AlertTriangle size={11} className="text-status-warning shrink-0" />,
+  info: <Info size={11} className="text-accent-blue shrink-0" />,
+};
+
 export function AgentDetailPanel({ agent, policies, groups, onClose, onRestart, onUnenroll }: Props) {
   const policy = policies.find((p) => p.id === agent?.policyId);
   const group = groups.find((g) => g.id === agent?.groupId);
+  const [tab, setTab] = useState<'info' | 'events'>('info');
+  const [events, setEvents] = useState<AgentEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!agent || tab !== 'events') return;
+    setEventsLoading(true);
+    fetchAgentEvents(agent.id).then(setEvents).catch(() => setEvents([])).finally(() => setEventsLoading(false));
+  }, [agent?.id, tab]);
 
   return (
     <SlidePanel
@@ -45,6 +63,53 @@ export function AgentDetailPanel({ agent, policies, groups, onClose, onRestart, 
     >
       {agent && (
         <div className="flex flex-col h-full">
+          {/* Onglets */}
+          <div className="flex border-b border-white/10 px-5 pt-3 gap-4 shrink-0">
+            {(['info', 'events'] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`pb-2.5 text-xs font-medium capitalize border-b-2 transition-colors ${
+                  tab === t
+                    ? 'border-accent-blue text-accent-blue'
+                    : 'border-transparent text-white/35 hover:text-white/60'
+                }`}
+              >
+                {t === 'info' ? 'Informations' : 'Erreurs'}
+              </button>
+            ))}
+          </div>
+
+          {/* Onglet Erreurs */}
+          {tab === 'events' && (
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              {eventsLoading ? (
+                <p className="text-xs text-white/30 text-center pt-8">Chargement…</p>
+              ) : events.length === 0 ? (
+                <p className="text-xs text-white/25 text-center pt-8">Aucune erreur enregistrée</p>
+              ) : (
+                <div className="space-y-2">
+                  {events.map((ev) => (
+                    <div key={ev.id} className="bg-bg-tertiary border border-white/[0.06] rounded p-3 space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        {LEVEL_ICON[ev.level]}
+                        <span className="text-[10px] text-white/30 font-mono">{ev.source}</span>
+                        <span className="ml-auto text-[10px] text-white/20">
+                          {new Date(ev.timestamp).toLocaleString('fr-FR')}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/70 leading-relaxed">{ev.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Onglet Informations */}
+          {tab === 'info' && (
+          <div className="flex flex-col flex-1 overflow-y-auto">
           {/* Status + OS */}
           <div className="px-5 pt-4 pb-3 border-b border-white/[0.07]">
             <div className="flex items-center gap-2 mb-3">
@@ -154,6 +219,8 @@ export function AgentDetailPanel({ agent, policies, groups, onClose, onRestart, 
                 )}
               </div>
             </div>
+          )}
+          </div>
           )}
         </div>
       )}
