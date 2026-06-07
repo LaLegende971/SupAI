@@ -50,6 +50,7 @@ class Policy(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, default="")
+    enrollment_token: Mapped[str] = mapped_column(String, unique=True, default="")
     push_interval: Mapped[int] = mapped_column(Integer, default=30)
     metrics: Mapped[list] = mapped_column(JSON, default=list)
     thresholds: Mapped[dict] = mapped_column(JSON, default=dict)

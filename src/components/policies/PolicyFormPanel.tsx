@@ -7,7 +7,7 @@ interface Props {
   open: boolean;
   policy: Policy | null;
   onClose: () => void;
-  onSave: (data: Omit<Policy, 'id' | 'agentCount'>) => Promise<void>;
+  onSave: (data: Omit<Policy, 'id' | 'agentCount' | 'enrollmentToken'>) => Promise<void>;
 }
 
 const INTERVALS = [

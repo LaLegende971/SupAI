@@ -9,7 +9,6 @@ import { QuickEnrollPanel } from '../components/enrollment/QuickEnrollPanel';
 import { useAgentStore } from '../store/agentStore';
 import { usePolicyStore } from '../store/policyStore';
 import { useGroupStore } from '../store/groupStore';
-import { useEnrollmentStore } from '../store/enrollmentStore';
 import { useMetricsSimulator } from '../hooks/useMetricsSimulator';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { WS_URL } from '../config';
@@ -24,13 +23,11 @@ export function AgentsPage() {
   const { agents, selectedAgent, setSelectedAgent, load: loadAgents } = useAgentStore();
   const { policies, load: loadPolicies } = usePolicyStore();
   const { groups, load: loadGroups } = useGroupStore();
-  const { load: loadTokens } = useEnrollmentStore();
 
   useEffect(() => {
     loadAgents();
     loadPolicies();
     loadGroups();
-    loadTokens();
   }, []);
 
   const [search, setSearch] = useState('');

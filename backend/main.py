@@ -14,7 +14,7 @@ from sqlalchemy import select
 load_dotenv(Path(__file__).parent / ".env")
 
 from database import get_engine, get_session_factory, Base, build_engine
-from models import AgentVersion, User
+from models import AgentVersion, User, Policy
 from auth import hash_password, get_current_user
 from routers import agents, enrollment, metrics, policies, groups, versions, settings
 from routers import auth as auth_router
@@ -37,11 +37,22 @@ async def lifespan(app: FastAPI):
 
 
 async def _migrate_db():
+    import secrets as _secrets
     async with get_engine().begin() as conn:
-        try:
-            await conn.execute(text("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'admin'"))
-        except Exception:
-            pass  # Colonne déjà existante
+        for stmt in [
+            "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'admin'",
+            "ALTER TABLE policies ADD COLUMN enrollment_token TEXT NOT NULL DEFAULT ''",
+        ]:
+            try:
+                await conn.execute(text(stmt))
+            except Exception:
+                pass  # Colonne déjà existante
+    # Générer un token pour les politiques qui n'en ont pas encore
+    async with get_session_factory()() as db:
+        result = await db.execute(select(Policy).where(Policy.enrollment_token == ""))
+        for policy in result.scalars().all():
+            policy.enrollment_token = _secrets.token_urlsafe(24)
+        await db.commit()
 
 
 async def _seed_admin():

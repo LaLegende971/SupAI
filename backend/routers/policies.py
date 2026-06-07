@@ -1,3 +1,4 @@
+import secrets
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -39,7 +40,7 @@ async def create_policy(
     db: AsyncSession = Depends(get_session),
     current_user: User = Depends(require_admin),
 ):
-    policy = Policy(**body.model_dump())
+    policy = Policy(**body.model_dump(), enrollment_token=secrets.token_urlsafe(24))
     db.add(policy)
     await db.commit()
     await db.refresh(policy)
@@ -64,6 +65,24 @@ async def update_policy(
     await db.commit()
     await db.refresh(policy)
     await log_action(db, "POLICY_UPDATE", request=request, username=current_user.username,
+                     resource_type="policy", resource_id=policy.id, resource_name=policy.name)
+    return await _policy_out(policy, db)
+
+
+@router.post("/{policy_id}/token/regenerate", response_model=PolicyOut)
+async def regenerate_token(
+    request: Request,
+    policy_id: str,
+    db: AsyncSession = Depends(get_session),
+    current_user: User = Depends(require_admin),
+):
+    policy = await db.get(Policy, policy_id)
+    if not policy:
+        raise HTTPException(404, "Policy not found")
+    policy.enrollment_token = secrets.token_urlsafe(24)
+    await db.commit()
+    await db.refresh(policy)
+    await log_action(db, "POLICY_TOKEN_REGENERATE", request=request, username=current_user.username,
                      resource_type="policy", resource_id=policy.id, resource_name=policy.name)
     return await _policy_out(policy, db)
 

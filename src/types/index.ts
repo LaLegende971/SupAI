@@ -21,6 +21,7 @@ export interface Policy {
   id: string;
   name: string;
   description: string;
+  enrollmentToken: string;
   pushInterval: 10 | 30 | 60 | 300;
   metrics: string[];
   thresholds: Record<string, number>;

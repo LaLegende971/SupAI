@@ -6,7 +6,6 @@ import { PolicyFormPanel } from '../components/policies/PolicyFormPanel';
 import { QuickEnrollPanel } from '../components/enrollment/QuickEnrollPanel';
 import { usePolicyStore } from '../store/policyStore';
 import { useGroupStore } from '../store/groupStore';
-import { useEnrollmentStore } from '../store/enrollmentStore';
 import type { Policy } from '../types';
 import { useAuthStore } from '../store/authStore';
 
@@ -15,23 +14,21 @@ export function PoliciesPage() {
   const { policies, isPanelOpen, selectedPolicy, openPanel, closePanel, addPolicy, updatePolicy, deletePolicy, load, error } =
     usePolicyStore();
   const { load: loadGroups } = useGroupStore();
-  const { load: loadTokens } = useEnrollmentStore();
 
   useEffect(() => {
     load();
     loadGroups();
-    loadTokens();
   }, []);
 
   const [enrollPolicyId, setEnrollPolicyId] = useState<string | undefined>(undefined);
   const [enrollOpen, setEnrollOpen] = useState(false);
 
-  async function handleSave(data: Omit<Policy, 'id' | 'agentCount'>) {
+  async function handleSave(data: Omit<Policy, 'id' | 'agentCount' | 'enrollmentToken'>) {
     try {
       if (selectedPolicy) {
         await updatePolicy({ ...selectedPolicy, ...data });
       } else {
-        await addPolicy(data);
+        await addPolicy({ ...data, enrollmentToken: '' });
       }
       closePanel();
     } catch {

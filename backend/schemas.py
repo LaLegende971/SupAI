@@ -102,6 +102,7 @@ class PolicyOut(BaseModel):
     id: str
     name: str
     description: str
+    enrollment_token: str = ""
     push_interval: int
     metrics: list[str]
     thresholds: dict[str, float]
