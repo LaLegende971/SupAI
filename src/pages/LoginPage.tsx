@@ -1,12 +1,16 @@
 import { useState } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 export function LoginPage() {
-  const login = useAuthStore((s) => s.login);
+  const { login, accessToken } = useAuthStore();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  if (accessToken) return <Navigate to="/dashboards" replace />;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -15,6 +19,7 @@ export function LoginPage() {
     setLoading(true);
     try {
       await login(username, password);
+      navigate('/dashboards', { replace: true });
     } catch {
       setError('Identifiants invalides');
     } finally {
