@@ -58,6 +58,37 @@ export interface Settings {
   alertsEnabled: boolean;
 }
 
+export type WidgetType = 'stat' | 'alerts' | 'agent-list' | 'metric-chart';
+export type WidgetSize = 'sm' | 'md' | 'lg';
+export type StatMetric = 'total' | 'online' | 'warning' | 'offline';
+
+export interface DashboardWidget {
+  id: string;
+  type: WidgetType;
+  title: string;
+  size: WidgetSize;
+  config?: { metric?: StatMetric; limit?: number };
+}
+
+export interface Dashboard {
+  id: string;
+  name: string;
+  widgets: DashboardWidget[];
+  createdAt: string;
+}
+
+export interface Alert {
+  id: string;
+  agentId: string;
+  host: string;
+  metric: string;
+  value: number;
+  threshold: number;
+  severity: 'warning' | 'critical';
+  timestamp: string;
+  acknowledged: boolean;
+}
+
 export const AVAILABLE_METRICS = [
   'CPU',
   'RAM',

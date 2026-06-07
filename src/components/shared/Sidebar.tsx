@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { Monitor, Shield, UserPlus, Layers, Settings } from 'lucide-react';
+import { LayoutDashboard, Monitor, Shield, UserPlus, Layers, Settings } from 'lucide-react';
 
 const navItems = [
+  { to: '/dashboards', icon: LayoutDashboard, label: 'Dashboards' },
   { to: '/agents', icon: Monitor, label: 'Agents' },
   { to: '/policies', icon: Shield, label: 'Politiques' },
   { to: '/enrollment', icon: UserPlus, label: 'Enrollment' },

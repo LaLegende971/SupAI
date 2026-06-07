@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Sidebar } from './components/shared/Sidebar';
+import { DashboardPage } from './pages/DashboardPage';
 import { AgentsPage } from './pages/AgentsPage';
 import { PoliciesPage } from './pages/PoliciesPage';
 import { EnrollmentPage } from './pages/EnrollmentPage';
@@ -13,7 +14,8 @@ export default function App() {
         <Sidebar />
         <main className="flex-1 overflow-hidden bg-bg-primary">
           <Routes>
-            <Route path="/" element={<Navigate to="/agents" replace />} />
+            <Route path="/" element={<Navigate to="/dashboards" replace />} />
+            <Route path="/dashboards" element={<DashboardPage />} />
             <Route path="/agents" element={<AgentsPage />} />
             <Route path="/policies" element={<PoliciesPage />} />
             <Route path="/enrollment" element={<EnrollmentPage />} />
