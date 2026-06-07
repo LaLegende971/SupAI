@@ -1,20 +1,21 @@
-import { Pencil, Trash2, Users } from 'lucide-react';
+import { Pencil, Trash2, Users, UserPlus } from 'lucide-react';
 import type { Policy } from '../../types';
 
 interface Props {
   policies: Policy[];
   onEdit: (policy: Policy) => void;
   onDelete: (id: string) => void;
+  onEnroll: (policyId: string) => void;
 }
 
 const INTERVAL_LABELS: Record<number, string> = {
-  10: '10 secondes',
-  30: '30 secondes',
-  60: '1 minute',
-  300: '5 minutes',
+  10: '10 s',
+  30: '30 s',
+  60: '1 min',
+  300: '5 min',
 };
 
-export function PolicyList({ policies, onEdit, onDelete }: Props) {
+export function PolicyList({ policies, onEdit, onDelete, onEnroll }: Props) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -44,7 +45,7 @@ export function PolicyList({ policies, onEdit, onDelete }: Props) {
               className="border-b border-white/[0.05] hover:bg-white/[0.03] transition-colors"
             >
               <td className="px-4 py-3 font-medium text-white/90">{policy.name}</td>
-              <td className="px-4 py-3 text-white/40 text-xs max-w-[220px] truncate">
+              <td className="px-4 py-3 text-white/40 text-xs max-w-[200px] truncate">
                 {policy.description}
               </td>
               <td className="px-4 py-3 text-white/50 text-xs">
@@ -52,7 +53,7 @@ export function PolicyList({ policies, onEdit, onDelete }: Props) {
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-1">
-                  {policy.metrics.map((m) => (
+                  {policy.metrics.slice(0, 3).map((m) => (
                     <span
                       key={m}
                       className="px-1.5 py-0.5 bg-bg-tertiary border border-white/10 rounded text-[11px] text-white/50"
@@ -60,6 +61,11 @@ export function PolicyList({ policies, onEdit, onDelete }: Props) {
                       {m}
                     </span>
                   ))}
+                  {policy.metrics.length > 3 && (
+                    <span className="px-1.5 py-0.5 text-[11px] text-white/30">
+                      +{policy.metrics.length - 3}
+                    </span>
+                  )}
                 </div>
               </td>
               <td className="px-4 py-3">
@@ -69,8 +75,17 @@ export function PolicyList({ policies, onEdit, onDelete }: Props) {
                 </span>
               </td>
               <td className="px-4 py-3">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <button
+                    type="button"
+                    onClick={() => onEnroll(policy.id)}
+                    className="p-1.5 text-white/30 hover:text-status-online rounded transition-colors"
+                    title="Enroller un agent avec cette politique"
+                  >
+                    <UserPlus size={13} />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => onEdit(policy)}
                     className="p-1.5 text-white/30 hover:text-accent-blue rounded transition-colors"
                     title="Modifier"
@@ -78,6 +93,7 @@ export function PolicyList({ policies, onEdit, onDelete }: Props) {
                     <Pencil size={13} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => onDelete(policy.id)}
                     className="p-1.5 text-white/30 hover:text-status-offline rounded transition-colors"
                     title="Supprimer"

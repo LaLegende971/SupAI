@@ -11,16 +11,16 @@ interface Props {
 }
 
 const INTERVALS = [
-  { value: 10, label: '10 secondes' },
-  { value: 30, label: '30 secondes' },
-  { value: 60, label: '1 minute' },
-  { value: 300, label: '5 minutes' },
+  { value: 10, label: '10 s' },
+  { value: 30, label: '30 s' },
+  { value: 60, label: '1 min' },
+  { value: 300, label: '5 min' },
 ] as const;
 
 const UPDATE_FREQUENCIES = [
-  { value: 3600, label: 'Toutes les heures' },
-  { value: 21600, label: 'Toutes les 6h' },
-  { value: 86400, label: 'Toutes les 24h' },
+  { value: 3600, label: '1 h' },
+  { value: 21600, label: '6 h' },
+  { value: 86400, label: '24 h' },
 ] as const;
 
 const DEFAULT_THRESHOLDS = { CPU: 80, RAM: 85, Disk: 90 };
@@ -42,14 +42,15 @@ function Input({ className = '', ...props }: React.InputHTMLAttributes<HTMLInput
 function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
-      onClick={() => onChange(!enabled)}
-      className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${
-        enabled ? 'bg-accent-blue' : 'bg-white/10'
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onChange(!enabled); }}
+      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
+        enabled ? 'bg-accent-blue' : 'bg-white/15'
       }`}
     >
       <span
-        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
-          enabled ? 'translate-x-4' : 'translate-x-0.5'
+        className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-150 ${
+          enabled ? 'translate-x-6' : 'translate-x-1'
         }`}
       />
     </button>
@@ -135,6 +136,7 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
             <div className="flex gap-2 flex-wrap">
               {INTERVALS.map((iv) => (
                 <button
+                  type="button"
                   key={iv.value}
                   onClick={() => setPushInterval(iv.value)}
                   className={`h-8 px-3 text-xs rounded border transition-colors ${
@@ -153,6 +155,7 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
             <div className="flex flex-wrap gap-2">
               {AVAILABLE_METRICS.map((m) => (
                 <button
+                  type="button"
                   key={m}
                   onClick={() => toggleMetric(m)}
                   className={`h-7 px-2.5 text-xs rounded border transition-colors ${
@@ -208,6 +211,7 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
                     <div className="flex gap-2 flex-wrap">
                       {UPDATE_FREQUENCIES.map((f) => (
                         <button
+                          type="button"
                           key={f.value}
                           onClick={() => setUpdateCheckFrequency(f.value)}
                           className={`h-8 px-3 text-xs rounded border transition-colors ${
@@ -243,6 +247,7 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
 
         <div className="px-5 py-4 border-t border-white/10 flex gap-2">
           <button
+            type="button"
             onClick={handleSave}
             disabled={!name.trim()}
             className="flex-1 h-9 bg-accent-blue text-white text-sm rounded font-medium
@@ -251,6 +256,7 @@ export function PolicyFormPanel({ open, policy, onClose, onSave }: Props) {
             {policy ? 'Enregistrer' : 'Créer la politique'}
           </button>
           <button
+            type="button"
             onClick={onClose}
             className="h-9 px-4 border border-white/10 text-sm text-white/50 rounded
               hover:text-white/80 transition-colors"

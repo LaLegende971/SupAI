@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { ClipboardCopy, Check } from 'lucide-react';
+import { API_BASE_URL } from '../../config';
 import type { Policy, Group, EnrollmentToken } from '../../types';
 
 interface Props {
   policies: Policy[];
   groups: Group[];
+  defaultPolicyId?: string;
   onGenerate: (host: string, policyId: string, groupId: string) => Promise<EnrollmentToken>;
 }
 
@@ -22,17 +24,16 @@ function Select({ className = '', ...props }: React.SelectHTMLAttributes<HTMLSel
   );
 }
 
-export function EnrollmentForm({ policies, groups, onGenerate }: Props) {
+export function EnrollmentForm({ policies, groups, defaultPolicyId, onGenerate }: Props) {
   const [host, setHost] = useState('');
-  const [policyId, setPolicyId] = useState(policies[0]?.id ?? '');
+  const [policyId, setPolicyId] = useState(defaultPolicyId ?? policies[0]?.id ?? '');
   const [groupId, setGroupId] = useState(groups[0]?.id ?? '');
   const [token, setToken] = useState<EnrollmentToken | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const serverUrl = 'http://192.168.1.220:8000';
   const psCommand = token
-    ? `Invoke-WebRequest -Uri "${serverUrl}/install/agent.ps1" -OutFile agent.ps1;\n.\\agent.ps1 -Token "${token.token}" -Server "${serverUrl}"`
+    ? `.\\supai-agent-1.0.0.exe -token "${token.token}" -server "${API_BASE_URL}"`
     : '';
 
   async function handleGenerate() {
@@ -87,6 +88,7 @@ export function EnrollmentForm({ policies, groups, onGenerate }: Props) {
       </div>
 
       <button
+        type="button"
         onClick={handleGenerate}
         disabled={!host.trim() || loading}
         className="h-9 px-5 bg-accent-blue text-white text-sm rounded font-medium
@@ -100,6 +102,7 @@ export function EnrollmentForm({ policies, groups, onGenerate }: Props) {
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-white/40 uppercase tracking-wide">Commande PowerShell</p>
             <button
+              type="button"
               onClick={handleCopy}
               className="flex items-center gap-1.5 px-2.5 py-1 text-xs border border-white/10
                 rounded text-white/50 hover:text-white hover:border-white/20 transition-colors"

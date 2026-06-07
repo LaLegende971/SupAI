@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
+import { UserPlus } from 'lucide-react';
 import { Topbar } from '../components/shared/Topbar';
 import { AgentStatCards } from '../components/agents/AgentStatCards';
 import { AgentFilters } from '../components/agents/AgentFilters';
 import { AgentTable } from '../components/agents/AgentTable';
 import { AgentDetailPanel } from '../components/agents/AgentDetailPanel';
+import { QuickEnrollPanel } from '../components/enrollment/QuickEnrollPanel';
 import { useAgentStore } from '../store/agentStore';
 import { usePolicyStore } from '../store/policyStore';
 import { useGroupStore } from '../store/groupStore';
+import { useEnrollmentStore } from '../store/enrollmentStore';
 import { useMetricsSimulator } from '../hooks/useMetricsSimulator';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { WS_URL } from '../config';
@@ -19,15 +22,18 @@ export function AgentsPage() {
   const { agents, selectedAgent, setSelectedAgent, load: loadAgents } = useAgentStore();
   const { policies, load: loadPolicies } = usePolicyStore();
   const { groups, load: loadGroups } = useGroupStore();
+  const { load: loadTokens } = useEnrollmentStore();
 
   useEffect(() => {
     loadAgents();
     loadPolicies();
     loadGroups();
+    loadTokens();
   }, []);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<AgentStatus | 'all'>('all');
+  const [enrollOpen, setEnrollOpen] = useState(false);
 
   const filtered = agents.filter((a) => {
     const matchSearch =
@@ -53,12 +59,23 @@ export function AgentsPage() {
         title="Agents"
         subtitle={`${agents.length} agents enregistrés`}
         actions={
-          <AgentFilters
-            search={search}
-            onSearch={setSearch}
-            statusFilter={statusFilter}
-            onStatusFilter={setStatusFilter}
-          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEnrollOpen(true)}
+              className="flex items-center gap-1.5 h-8 px-3 bg-accent-blue text-white text-xs rounded
+                font-medium hover:bg-accent-blue/90 transition-colors"
+            >
+              <UserPlus size={13} />
+              Enroller un agent
+            </button>
+            <AgentFilters
+              search={search}
+              onSearch={setSearch}
+              statusFilter={statusFilter}
+              onStatusFilter={setStatusFilter}
+            />
+          </div>
         }
       />
 
@@ -79,6 +96,20 @@ export function AgentsPage() {
           {filtered.length === 0 && agents.length > 0 && (
             <p className="text-center text-sm text-white/25 mt-6">Aucun agent ne correspond aux filtres</p>
           )}
+          {agents.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <p className="text-sm text-white/25">Aucun agent enregistré</p>
+              <button
+                type="button"
+                onClick={() => setEnrollOpen(true)}
+                className="flex items-center gap-1.5 h-8 px-4 border border-white/15 text-xs text-white/50
+                  rounded hover:text-white hover:border-white/30 transition-colors"
+              >
+                <UserPlus size={12} />
+                Enroller le premier agent
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -89,6 +120,11 @@ export function AgentsPage() {
         onClose={() => setSelectedAgent(null)}
         onRestart={handleRestart}
         onUnenroll={handleUnenroll}
+      />
+
+      <QuickEnrollPanel
+        open={enrollOpen}
+        onClose={() => setEnrollOpen(false)}
       />
     </div>
   );
