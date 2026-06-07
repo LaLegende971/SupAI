@@ -3,16 +3,17 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 from dotenv import load_dotenv
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 
-# Load .env if present (PostgreSQL URL override)
 load_dotenv(Path(__file__).parent / ".env")
 
 from database import get_engine, get_session_factory, Base, build_engine
-from models import AgentVersion
+from models import AgentVersion, User
+from auth import hash_password, get_current_user
 from routers import agents, enrollment, metrics, policies, groups, versions, settings
+from routers import auth as auth_router
 from ws import ws_endpoint
 
 
@@ -22,8 +23,18 @@ async def lifespan(app: FastAPI):
     async with get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await _seed_versions()
+    await _seed_admin()
     asyncio.create_task(_cleanup_loop())
     yield
+
+
+async def _seed_admin():
+    default_password = os.getenv("ADMIN_PASSWORD", "admin")
+    async with get_session_factory()() as db:
+        result = await db.execute(select(User).where(User.username == "admin"))
+        if not result.scalar_one_or_none():
+            db.add(User(username="admin", hashed_password=hash_password(default_password)))
+            await db.commit()
 
 
 async def _seed_versions():
@@ -64,8 +75,8 @@ app = FastAPI(title="SupAI API", version="1.0.0", lifespan=lifespan)
 
 ALLOWED_ORIGINS = [
     "https://192.168.1.221",
-    "http://127.0.0.1:5000",   # dev local
-    "http://localhost:5000",    # dev local
+    "http://127.0.0.1:5000",
+    "http://localhost:5000",
 ]
 
 app.add_middleware(
@@ -76,13 +87,18 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Forwarded-For"],
 )
 
-app.include_router(agents.router, prefix="/api/v1")
+# Routes publiques (utilisées par les agents Windows)
+app.include_router(auth_router.router, prefix="/api/v1")
 app.include_router(enrollment.router, prefix="/api/v1")
 app.include_router(metrics.router, prefix="/api/v1")
-app.include_router(policies.router, prefix="/api/v1")
-app.include_router(groups.router, prefix="/api/v1")
-app.include_router(versions.router, prefix="/api/v1")
-app.include_router(settings.router, prefix="/api/v1")
+
+# Routes protégées par JWT
+protected = {"dependencies": [Depends(get_current_user)]}
+app.include_router(agents.router, prefix="/api/v1", **protected)
+app.include_router(policies.router, prefix="/api/v1", **protected)
+app.include_router(groups.router, prefix="/api/v1", **protected)
+app.include_router(versions.router, prefix="/api/v1", **protected)
+app.include_router(settings.router, prefix="/api/v1", **protected)
 
 
 @app.websocket("/ws/metrics")

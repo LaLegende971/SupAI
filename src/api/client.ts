@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import { useAuthStore } from '../store/authStore';
 
 function toSnake(str: string): string {
   return str.replace(/([A-Z])/g, '_$1').toLowerCase();
@@ -25,14 +26,32 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-// Outgoing: camelCase → snake_case
+// Injecter le token JWT + transformer les clés
 apiClient.interceptors.request.use((config) => {
   if (config.data) config.data = transformKeys(config.data, toSnake);
+  const token = useAuthStore.getState().accessToken;
+  if (token) config.headers['Authorization'] = `Bearer ${token}`;
   return config;
 });
 
-// Incoming: snake_case → camelCase
-apiClient.interceptors.response.use((response) => {
-  response.data = transformKeys(response.data, toCamel);
-  return response;
-});
+// snake_case → camelCase + gestion 401
+apiClient.interceptors.response.use(
+  (response) => {
+    response.data = transformKeys(response.data, toCamel);
+    return response;
+  },
+  async (error) => {
+    if (error.response?.status === 401) {
+      const { tryRefresh, logout } = useAuthStore.getState();
+      const ok = await tryRefresh();
+      if (ok) {
+        const token = useAuthStore.getState().accessToken;
+        error.config.headers['Authorization'] = `Bearer ${token}`;
+        return axios(error.config);
+      }
+      await logout();
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);

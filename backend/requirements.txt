@@ -11,3 +11,5 @@ psutil==6.1.0
 alembic==1.14.0
 python-dotenv==1.0.1
 packaging==24.2
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4

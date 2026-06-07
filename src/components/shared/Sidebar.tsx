@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Monitor, Shield, UserPlus, Layers, Settings } from 'lucide-react';
+import { LayoutDashboard, Monitor, Shield, UserPlus, Layers, Settings, LogOut } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
 
 const navItems = [
   { to: '/dashboards', icon: LayoutDashboard, label: 'Dashboards' },
@@ -11,6 +12,8 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const { username, logout } = useAuthStore();
+
   return (
     <aside className="w-[200px] shrink-0 bg-bg-secondary border-r border-white/10 flex flex-col">
       {/* Logo */}
@@ -44,9 +47,22 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer */}
+      {/* Footer : utilisateur + logout */}
       <div className="px-4 py-3 border-t border-white/10">
-        <p className="text-[10px] text-white/20">v0.1.0 — mock mode</p>
+        {username && (
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-white/40 truncate">{username}</span>
+            <button
+              type="button"
+              onClick={() => logout()}
+              title="Se déconnecter"
+              className="text-white/25 hover:text-status-offline transition-colors"
+            >
+              <LogOut size={13} />
+            </button>
+          </div>
+        )}
+        <p className="text-[10px] text-white/20">v1.0.0</p>
       </div>
     </aside>
   );
